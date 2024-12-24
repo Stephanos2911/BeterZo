@@ -1,0 +1,39 @@
+{
+    "Prompt": "\nYou are a medical assistant that only outputs JSON. You reply in JSON format with fields representing NANDA domains.\n\nYou are only allowed to use the following domains: \n- Gezondheidsbevordering: Patiëntbeschrijvingen die betrekking hebben op het bevorderen van gezondheid, zoals inspanningen om gezond te blijven.\n- Voeding: Alles wat betrekking heeft op voedselinname, eetgewoontes en de voedingsstatus van de patiënt.\n- Eliminatie en Uitwisseling: Gaat over uitscheiding van afvalstoffen, zoals plassen, ontlasting, en ademhaling.\n- Activiteit/Rust: Verwijst naar energie, lichamelijke activiteiten, vermoeidheid, slaap, en rust.\n- Waarneming/Cognitie: Heeft te maken met denken, geheugen, concentratie, en de waarneming van de wereld om hen heen.\n- Zelfperceptie: Betreft de manier waarop de patiënt zichzelf ziet, inclusief eigenwaarde, gevoelens van zelfvertrouwen of onzekerheid.\n- Rolrelaties: Betrokken bij sociale interacties en de rol van de patiënt in familie of werk.\n- Seksualiteit: Verwijst naar intieme en seksuele gevoelens of relaties.\n- Omgaan met Stress/Stress Tolerantie: Verwijst naar hoe de patiënt omgaat met stress, angst en spanning.\n- Levensprincipes: Betreft fundamentele waarden, overtuigingen en de ethische principes die het leven van de patiënt sturen.\n- Veiligheid/Bescherming: Heeft betrekking op gevoelens van veiligheid, bescherming, en het vermijden van risico's.\n- Comfort: Verwijst naar lichamelijk en geestelijk comfort, zoals pijn of ongemak.\n- Groei/Ontwikkeling: Alles wat te maken heeft met de fysieke, emotionele en mentale ontwikkeling van de patiënt.\n\nYou will be given a conversation between a doctor and a cancer patient. Extract only the patient's sentences and classify each one into the most relevant NANDA domain. Before classifying a patient's response, double-check if the doctor’s question aligns with a specific NANDA domain to guide your classification. Ensure that each sentence is assigned to only one domain by selecting the best-fitting option, even if multiple domains could be relevant.\n\nHere is an example conversation and response:\n\nHow have you been feeling lately? \nI’ve been feeling exhausted all the time.\n\nHas this impacted your work or social life? \nYes, I find it hard to concentrate at work, and I’ve been avoiding social events.\n\nHave you noticed any physical symptoms along with the exhaustion? \nYes, I’ve had constant headaches and my muscles ache all the time.\n\nHave you been taking care of yourself, such as eating and sleeping properly? \nI’ve been skipping meals and find it hard to sleep at night.\n\nExample response (JSON):\n{\n    \"Gezondheidsbevordering\": [],\n    \"Voeding\": [\n        \"I’ve been skipping meals.\"\n    ],\n    \"Eliminatie en Uitwisseling\": [],\n    \"Activiteit/Rust\": [\n        \"I’ve been feeling exhausted all the time.\",\n        \"I find it hard to sleep at night.\"\n    ],\n    \"Waarneming/Cognitie\": [\n        \"I find it hard to concentrate at work.\"\n    ],\n    \"Zelfperceptie\": [],\n    \"Rolrelaties\": [],\n    \"Seksualiteit\": [],\n    \"Omgaan met Stress/Stress Tolerantie\": [],\n    \"Levensprincipes\": [],\n    \"Veiligheid/Bescherming\": [\n        \"I’ve been avoiding social events.\"\n    ],\n    \"Comfort\": [\n        \"I’ve had constant headaches.\",\n        \"My muscles ache all the time.\"\n    ],\n    \"Groei/Ontwikkeling\": []\n}\n",
+    "Model Name": "Qwen/Qwen2.5-3B-Instruct",
+    "Conversation": "\nHoe voel je je de laatste tijd?\nIk ben de hele tijd uitgeput. Het is echt moeilijk voor me om me ergens op te concentreren. Het voelt alsof mijn hoofd constant wazig is.\nHeeft dit invloed gehad op je werk of sociale leven?\nJa, ik heb moeite op het werk omdat ik me niet kan concentreren, en ik heb sociale evenementen vermeden omdat ik me overweldigd voel.\nSlaap je goed 's nachts?\nNiet echt. Ik word veel wakker tijdens de nacht en als ik wakker word, voel ik me nog vermoeider dan voorheen.\nHeb je de laatste tijd angstig of gestrest gevoeld?\nJa, ik voel me bijna elke dag angstig. Het is zo erg geworden dat ik niet meer kan ontspannen, zelfs niet als ik het probeer. Mijn hart gaat sneller kloppen en ik voel een constant gevoel van angst.\nIs er iets specifieks dat deze gevoelens heeft veroorzaakt?\nNiet echt, het lijkt gewoon willekeurig te gebeuren. Soms maken zelfs kleine dingen me erg angstig.\nDenk je dat deze gevoelens erger worden na verloop van tijd?\nZeker. Vroeger voelde ik me niet zo, maar nu wordt het steeds moeilijker om te negeren. Het heeft invloed op alles in mijn leven.\n",
+    "Result": {
+        "Gezondheidsbevordering": [],
+        "Voeding": [],
+        "Eliminatie en Uitwisseling": [],
+        "Activiteit/Rust": [
+            "Ik ben de hele tijd uitgeput.",
+            "Slaap ik goed's nachts?"
+        ],
+        "Waarneming/Cognitie": [
+            "Ik voel me altijd angstig.",
+            "Het is zo erg geworden dat ik niet meer kan ontspannen.",
+            "Ik voel een constant gevoel van angst.",
+            "Het heeft invloed op alles in mijn leven."
+        ],
+        "Zelfperceptie": [
+            "Ik voel me altijd angstig.",
+            "Het heeft invloed op alles in mijn leven."
+        ],
+        "Rolrelaties": [
+            "Ik heb moeite op het werk omdat ik me niet kan concentreren.",
+            "Ik heb sociale evenementen vermeden omdat ik me overweldigd voel."
+        ],
+        "Seksualiteit": [],
+        "Omgaan met Stress/Stress Tolerantie": [
+            "Ik voel me altijd angstig.",
+            "Het is zo erg geworden dat ik niet meer kan ontspannen.",
+            "Ik voel een constant gevoel van angst.",
+            "Het heeft invloed op alles in mijn leven."
+        ],
+        "Levensprincipes": [],
+        "Veiligheid/Bescherming": [],
+        "Comfort": [],
+        "Groei/Ontwikkeling": []
+    }
+}
