@@ -1,24 +1,62 @@
 import torch
 from transformers import pipeline
 from huggingface_hub import login
-import json
-import os
+import json, os, whisper
+
+# Configuration
+UseWhisper = True  # Set to False to disable Whisper STT
+audio_file_name = "conversatie_1.mp3"  # Name of the audio file to transcribe
 
 # Define folder paths
 root_folder = os.getcwd()
 results_folder = os.path.join(root_folder, "Resultaten")
-conversations_folder = os.path.join(root_folder, "Conversaties")
+conversations_folder = os.path.join(root_folder, "Conversaties", "recordings")
+transcriptions_folder = os.path.join(root_folder, "Conversaties", "transcriptions")
 os.makedirs(results_folder, exist_ok=True)
 os.makedirs(conversations_folder, exist_ok=True)
+os.makedirs(transcriptions_folder, exist_ok=True)
 
+
+# Hugging Face login
 login("geheim")
 
 # Replace the MPS configuration with proper device detection
 device = 'mps' if torch.backends.mps.is_available() else 'cpu'
-torch.set_num_threads(6)  # Limit threads for M3 efficiency
 
-# Load the Llama 3.2 3B Instruct model using the pipeline
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
+# Load Whisper model
+def transcribe_audio(file_path):
+    model = whisper.load_model("base") 
+    result = model.transcribe(file_path, fp16=torch.cuda.is_available())
+    return result["text"]
+
+# Determine conversation content
+def load_conversation(use_whisper, audio_file_name, text_file_name):
+    if use_whisper:
+        audio_file_path = os.path.join(conversations_folder, audio_file_name)
+        if os.path.exists(audio_file_path):
+            try:
+                print(f"Transcribing audio file: {audio_file_name}")
+                return transcribe_audio(audio_file_path)
+            except Exception as e:
+                print(f"Error during transcription: {e}")
+                return ""
+        else:
+            print(f"Audio file not found: {audio_file_path}")
+            return ""
+    else:
+        text_file_path = os.path.join(transcriptions_folder, text_file_name)
+        if os.path.exists(text_file_path):
+            try:
+                print(f"Reading text file: {text_file_name}")
+                with open(text_file_path, 'r', encoding='utf-8') as f:
+                    return f.read()
+            except Exception as e:
+                print(f"Error reading text file: {e}")
+                return ""
+        else:
+            print(f"Text file not found: {text_file_path}")
+            return ""
+
 
 
 def process_model(model_id, conversation, system_instructions):
@@ -41,8 +79,8 @@ def process_model(model_id, conversation, system_instructions):
             max_new_tokens=512,
             num_return_sequences=1,
             pad_token_id=pipe.tokenizer.eos_token_id,
-            do_sample=True,  # Changed to True to avoid warning
-            temperature=0.1,  # Added low temperature for more focused outputs
+            do_sample=True, 
+            temperature=0.1,
         )
 
         # Handle different output formats
@@ -76,77 +114,10 @@ def process_model(model_id, conversation, system_instructions):
             "raw_response": "Model processing failed"
         }
 
-# Define the input conversation in Dutch
-conversation = """
-Goedemiddag, hoe gaat het vandaag met u?
-Hallo… het gaat wel, denk ik.
-Ik heb eigenlijk weinig energie en eerlijk gezegd ook geen motivatie om nog veel te doen.
-Dat begrijp ik.
-Het is heel normaal dat de behandelingen zwaar kunnen zijn en dat het moeilijk is om gemotiveerd te blijven.
-Hoe ervaart u dat zelf, op dit moment?
-Het is moeilijk te omschrijven.
-Ik merk gewoon dat ik geen zin heb om beter te worden. 
-Het voelt allemaal zo… uitzichtloos.
-Ik ben eigenlijk helemaal niet bezig met herstel.
-Dat klinkt inderdaad heel zwaar.
-Dus u voelt zich niet zo gemotiveerd om stappen richting herstel te maken?
-Nee, niet echt.
-Het voelt alsof ik geen interesse in verbetering heb.
-En eigenlijk ook weinig interesse in gezondheid.
-Het lijkt allemaal zo ver weg, en ik ben er een beetje onverschillig over geworden.
-Dat is begrijpelijk.
-Soms kan het door de fysieke vermoeidheid ook lastiger worden om u gemotiveerd te voelen.
-Hoe gaat het op fysiek vlak, als ik vragen mag?
-Ik ben eigenlijk niet meer actief.
-En als ik iets probeer, dan merk ik dat ik snel moe word.
-Zelfs simpele dingen zoals opstaan of rondlopen, het kost me allemaal zoveel moeite.
-Mijn uithoudingsvermogen is gewoon heel laag, en ik voel me fysiek minder sterk dan voorheen.
-Dus u ervaart dat de activiteiten die u eerder deed nu moeilijker zijn?
-Ja, zelfs kleine dingen zijn al een uitdaging.
-Ik kan niet in staat om veel te doen en ik merk dat er echt beperkingen in beweging zijn.
-Sporten of andere inspannende activiteiten zijn bijna onmogelijk geworden.
-Dat klinkt echt vermoeiend.
-Het lijkt alsof de behandelingen en alles daaromheen echt een enorme tol eisen.
-Hoe gaat het op sociaal vlak?
-Heeft u mensen in uw omgeving met wie u hierover kunt praten?
-Eigenlijk niet… ik voel me vaak alleen.
-Ik heb geen sociale contacten meer om mee te praten en voel me eigenlijk best wel afgesloten van anderen.
-Dat moet erg zwaar voor u zijn.
-Dus u ervaart weinig steun vanuit uw omgeving?
-Ja, het voelt alsof ik geen steun van vrienden heb.
-Er zijn nauwelijks mensen met wie ik nog praat, en ik merk dat ik steeds minder deel uitmaak van sociale activiteiten.
-Mijn sociale kring is echt heel beperkt geworden, en ik voel me vaak buitengesloten.
-Dat moet een ontzettend moeilijk gevoel zijn.
-U hebt het gevoel dat u er alleen voor staat?
-Ja, precies.
-Die sociale eenzaamheid is soms echt overweldigend.
-Ik voel een gebrek aan interactie, en het maakt alles gewoon nog moeilijker.
-Het lijkt soms alsof niemand echt begrijpt wat ik doormaak.
-Dat is heel begrijpelijk.
-Het kan soms ook lastig zijn voor anderen om de situatie volledig te bevatten, zeker wanneer ze niet weten wat u doormaakt.
-Denkt u dat er iets is wat we samen kunnen doen om u een beetje meer verbonden te laten voelen?
-Ik weet het niet… ik voel me gewoon zo onverschillig over alles.
-Ik heb het gevoel dat ik weinig energie overhoud om te proberen.
-Misschien helpt het wel, maar ik zie niet hoe ik dat moet aanpakken.
-Dat begrijp ik goed.
-Misschien kunnen we beginnen met kleine stappen, zonder dat het meteen te veel druk op u legt.
-Zou het u bijvoorbeeld helpen om een keer deel te nemen aan een ondersteuningsgroep, of misschien een afspraak te maken met iemand die ervaring heeft met deze situaties?
-Dat zou wel een optie kunnen zijn… al weet ik niet of ik daar de kracht voor heb.
-Maar ik wil het wel proberen, denk ik.
-Dat is al een mooie stap.
-Het hoeft niet veel energie te kosten, maar misschien kan zo’n kleine stap u helpen om het gevoel van eenzaamheid een beetje te verlichten en wat sociale steun te ervaren.
-En als het toch te zwaar voelt, kunnen we samen naar andere opties kijken.
-Ja… dat klinkt wel goed.
-Misschien is het inderdaad het proberen waard.
-Al blijft het moeilijk.
-Dat begrijp ik.
-We kunnen rustig aan doen en stapje voor stapje verder kijken.
-Het belangrijkste is dat u weet dat er mensen zijn die er voor u willen zijn.
-We zullen er alles aan doen om u zo goed mogelijk te ondersteunen.
-"""
-
+#Prompt
 system_instructions = """
 You are a medical assistant that only outputs JSON. You reply in JSON format with fields representing NANDA domains.
+You will be given a conversation between a doctor and a cancer patient. Extract only the patient's sentences and classify each one into the most relevant NANDA domain. 
 
 You are only allowed to use the following domains: 
 - Gezondheidsbevordering: Patiëntbeschrijvingen die betrekking hebben op het bevorderen van gezondheid, zoals inspanningen om gezond te blijven.
@@ -163,9 +134,11 @@ You are only allowed to use the following domains:
 - Comfort: Verwijst naar lichamelijk en geestelijk comfort, zoals pijn of ongemak.
 - Groei/Ontwikkeling: Alles wat te maken heeft met de fysieke, emotionele en mentale ontwikkeling van de patiënt.
 
-You will be given a conversation between a doctor and a cancer patient. Extract only the patient's sentences and classify each one into the most relevant NANDA domain. Before classifying a patient's response, double-check if the doctor’s question aligns with a specific NANDA domain to guide your classification. Ensure that each sentence is assigned to only one domain by selecting the best-fitting option, even if multiple domains could be relevant.
+Before classifying a patient's response, double-check if the doctor’s question aligns with a specific NANDA domain to guide your classification. 
+Ensure that each sentence is assigned to only one domain by selecting the best-fitting option, even if multiple domains could be relevant.
 
-In addition to classifying the patient's responses, generate a general advice based on the analysis, focusing specifically on the psychosocial aspects of the patient's experience. The advice must consist of short, actionable steps the doctor can take to address the psychosocial challenges identified in the patient's responses.
+In addition to classifying the patient's responses, generate a general advice based on the analysis, focusing specifically on the psychosocial aspects of the patient's experience. 
+The advice must consist of short, actionable steps the doctor can take to address the psychosocial challenges identified in the patient's responses.
 
 Here is an example conversation and response:
 
@@ -210,7 +183,10 @@ Example response (JSON):
         ],
         "Groei/Ontwikkeling": []
     },
-    "Advice": "Verwijs de patiënt naar een psycholoog voor stress- en emotionele ondersteuning. Moedig deelname aan sociale ondersteuningsgroepen aan om isolatie te verminderen. Adviseer een geleidelijk plan voor fysieke activiteiten om energieniveaus te verbeteren. Behandel fysieke symptomen zoals hoofdpijn en spierpijn met passende interventies."
+    "Advice": "Verwijs de patiënt naar een psycholoog voor stress- en emotionele ondersteuning. 
+    Moedig deelname aan sociale ondersteuningsgroepen aan om isolatie te verminderen. 
+    Adviseer een geleidelijk plan voor fysieke activiteiten om energieniveaus te verbeteren. 
+    Behandel fysieke symptomen zoals hoofdpijn en spierpijn met passende interventies."
 }
 
 """
@@ -223,6 +199,13 @@ models_to_test = [
 
 # Process each model
 for model_id in models_to_test:
+    UseWhisper = True  # Set to False If you don't want to use Whisper for STT but use a text file instead
+    audio_file_name = "conversatie_1.mp3"  # Name of the audio file to transcribe (/conversaties/recordings/filename.mp3)
+    text_file_name = "conversatie_1.txt"  # Name of the text file if not using Whisper (conversaties/transcripties/filename.txt)
+    
+    # Load conversation
+    conversation = load_conversation(UseWhisper, audio_file_name, text_file_name)
+    
     print(f"\nProcessing model: {model_id}")
     
     response_json = process_model(model_id, conversation, system_instructions)
